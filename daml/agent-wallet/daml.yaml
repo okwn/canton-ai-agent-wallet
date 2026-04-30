@@ -1,0 +1,14 @@
+# Daml model for Canton Agent Wallet
+# daml.yaml — Package configuration
+
+sdk-version: 2.9.0
+name: canton-agent-wallet
+version: 0.1.0
+source: model
+dependencies:
+  - daml-prim
+  - daml-stdlib
+  - daml-script
+parties:
+  - Agent
+  - User

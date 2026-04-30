@@ -1,0 +1,1 @@
+{"status":"ok","timestamp":"2026-04-29T22:22:36.666Z","mode":"development","capabilities":{"intentParser":"real","policyEngine":"real","marketData":"simulated","walletExecution":"simulated","damlIntegration":"disabled"}}

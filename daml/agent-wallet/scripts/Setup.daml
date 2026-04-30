@@ -1,0 +1,199 @@
+-- Setup.daml
+-- Daml Script: simulate the full policy → instruction → approval → receipt lifecycle
+
+module Setup where
+
+import Daml.Script
+import Policy
+import Instruction
+import AuditLog
+
+-- | Test the full agent wallet flow
+testAgentWalletFlow : Script ()
+testAgentWalletFlow = do
+  -- Setup: two parties
+  user <- allocateParty "User"
+  agent <- allocateParty "Agent"
+
+  -- 1. Create a UserPolicy for the user
+  policyCid <- submit user do
+    createCmd UserPolicy
+      with
+        user
+        agent
+        maxPerTrade = 20.0
+        approvalThreshold = 10.0
+        maxDaily = 100.0
+        whitelistEnabled = True
+        whitelistedStrategies = ["froburn-yield-v1", "lace-stable", "cantonswap-cc"]
+        version = 1
+
+  let instructionId = "inst-001"
+      now = uniqueTime 0
+
+  -- 2. Agent proposes an instruction (within policy)
+  proposeCid <- submit agent do
+    createCmd AgentInstruction
+      with
+        user
+        agent
+        instructionId
+        action = FindYield
+        rawText = "Find the cheapest yield up to 5 CC"
+        amountMicroCC = 5.0
+        provider = Some "froburn"
+        strategyId = Some "froburn-yield-v1"
+        slippageBps = Some 50
+        simulationOnly = True
+        status = Pending
+        createdAt = now
+        decisionAt = None
+        decisionBy = None
+
+  -- 3. User approves the instruction
+  approvalCid <- submit user do
+    exerciseCmd proposeCid ApproveInstruction
+      with approver = user; approvedAt = uniqueTime 1
+
+  -- 4. Agent executes (simulated — no real tx)
+  receiptCid <- submit agent do
+    exerciseCmd approvalCid ExerciseApproval
+      with
+        resultTxHash = "0xSIM" <> show 1
+        outputMicroCC = 5.05
+        feesPaidMicroCC = 0.0005
+        executedAt = uniqueTime 2
+        resultStatus = Executed
+        receiptReason = "Simulated execution complete"
+
+  -- Verify receipt
+  receipt <- fetch receiptCid
+  assert (receipt.status == Executed)
+  assert (receipt.txHash == Some ("0xSIM" <> show 1))
+  assert receipt.simulationOnly == True
+
+  -- 5. Log an audit entry
+  auditCid <- submit user do
+    createCmd AuditEntry
+      with
+        user; agent
+        actionType = "FIND_YIELD"
+        intentRaw = "Find the cheapest yield up to 5 CC"
+        intentAction = "FIND_YIELD"
+        intentAmount = 5.0
+        policyDecision = "APPROVED"
+        policyReason = "Within per-trade limit"
+        executionResult = "Simulated success"
+        isSimulated = True
+        timestamp = uniqueTime 3
+
+  pure ()
+
+-- | Test: instruction that exceeds per-trade policy → rejection
+testAgentWalletFlowRejection : Script ()
+testAgentWalletFlowRejection = do
+  user <- allocateParty "User"
+  agent <- allocateParty "Agent"
+
+  -- Policy: max 5 CC per trade
+  policyCid <- submit user do
+    createCmd UserPolicy
+      with
+        user; agent
+        maxPerTrade = 5.0
+        approvalThreshold = 10.0
+        maxDaily = 100.0
+        whitelistEnabled = False
+        whitelistedStrategies = []
+        version = 1
+
+  let instructionId = "inst-002"
+      now = uniqueTime 0
+
+  -- Agent proposes instruction for 50 CC (exceeds policy)
+  proposeCid <- submit agent do
+    createCmd AgentInstruction
+      with
+        user; agent; instructionId
+        action = ExecuteStrategy
+        rawText = "Deploy 50 CC to yield"
+        amountMicroCC = 50.0
+        provider = Some "froburn"
+        strategyId = Some "froburn-yield-v1"
+        slippageBps = Some 50
+        simulationOnly = False
+        status = Pending
+        createdAt = now
+        decisionAt = None
+        decisionBy = None
+
+  -- User rejects due to policy violation
+  receiptCid <- submit user do
+    exerciseCmd proposeCid RejectInstruction
+      with rejector = user; rejectedAt = uniqueTime 1; reason = "Exceeds per-trade policy limit of 5 CC"
+
+  receipt <- fetch receiptCid
+  assert (receipt.status == Failed)
+  assert (receipt.receiptReason == "Rejected: Exceeds per-trade policy limit of 5 CC")
+
+  pure ()
+
+-- | Test: simulation-only instruction auto-approved
+testSimulationAutoApproval : Script ()
+testSimulationAutoApproval = do
+  user <- allocateParty "User"
+  agent <- allocateParty "Agent"
+
+  policyCid <- submit user do
+    createCmd UserPolicy
+      with
+        user; agent
+        maxPerTrade = 100.0
+        approvalThreshold = 10.0
+        maxDaily = 500.0
+        whitelistEnabled = False
+        whitelistedStrategies = []
+        version = 1
+
+  let instructionId = "inst-003"
+      now = uniqueTime 0
+
+  proposeCid <- submit agent do
+    createCmd AgentInstruction
+      with
+        user; agent; instructionId
+        action = FindYield
+        rawText = "Simulate a 20 CC yield search"
+        amountMicroCC = 20.0
+        provider = Some "lace"
+        strategyId = Some "lace-stable"
+        slippageBps = Some 30
+        simulationOnly = True
+        status = Pending
+        createdAt = now
+        decisionAt = None
+        decisionBy = None
+
+  approvalCid <- submit user do
+    exerciseCmd proposeCid ApproveInstruction
+      with approver = user; approvedAt = uniqueTime 1
+
+  receiptCid <- submit agent do
+    exerciseCmd approvalCid ExerciseApproval
+      with
+        resultTxHash = "0xSIM" <> show 3
+        outputMicroCC = 20.05
+        feesPaidMicroCC = 0.0003
+        executedAt = uniqueTime 2
+        resultStatus = Executed
+        receiptReason = "Simulated — no real transaction"
+
+  receipt <- fetch receiptCid
+  assert receipt.simulationOnly == True
+  assert (receipt.outputMicroCC > receipt.amountMicroCC)
+
+  pure ()
+
+-- Helper: generate a unique time from an Integer
+uniqueTime : Int -> Time
+uniqueTime n = time (date 2024 Jan 1) (hours n)

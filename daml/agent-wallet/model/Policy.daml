@@ -1,0 +1,67 @@
+-- Policy.daml
+-- Daml template for user-defined safety policies
+
+module Policy where
+
+import Daml.Script
+
+-- | Maximum per-trade amount in micro-CC
+type MaxPerTrade = Decimal
+-- | Approval threshold in micro-CC
+type ApprovalThreshold = Decimal
+-- | Maximum daily spend in micro-CC
+type MaxDaily = Decimal
+
+-- | User policy contract — defines spending rules for the agent
+template UserPolicy
+  with
+    user : Party
+    agent : Party
+    maxPerTrade : Decimal
+    approvalThreshold : Decimal
+    maxDaily : Decimal
+    whitelistEnabled : Bool
+    whitelistedStrategies : [Text]
+    version : Int
+  where
+    signatory user
+    observer agent
+
+    -- Agent can propose a transaction within policy bounds
+    choice ApprovePolicy : ContractId UserPolicy
+      with
+        newMaxPerTrade : Decimal
+        newApprovalThreshold : Decimal
+        newMaxDaily : Decimal
+        newWhitelistEnabled : Bool
+        newWhitelistedStrategies : [Text]
+      controller agent
+      do
+        create this with
+          maxPerTrade = newMaxPerTrade
+          approvalThreshold = newApprovalThreshold
+          maxDaily = newMaxDaily
+          whitelistEnabled = newWhitelistedStrategies
+          whitelistedStrategies = newWhitelistedStrategies
+          version = version + 1
+
+    -- Archive policy to deactivate it
+    choice ArchivePolicy : ()
+      controller user
+      do
+        pure ()
+
+-- | Check if an amount is within policy bounds
+checkWithinPolicy : UserPolicy -> Decimal -> Bool
+checkWithinPolicy policy amount =
+  amount <= policy.maxPerTrade
+
+-- | Check if amount requires user approval
+requiresApproval : UserPolicy -> Decimal -> Bool
+requiresApproval policy amount =
+  amount > policy.approvalThreshold
+
+-- | Check if strategy is whitelisted
+isStrategyAllowed : UserPolicy -> Text -> Bool
+isStrategyAllowed policy strategy =
+  not policy.whitelistEnabled || elem strategy policy.whitelistedStrategies

@@ -1,0 +1,10 @@
+{
+  "name": "@canton/daml-agent-wallet",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Daml smart contract model for Canton Agent Wallet — policy enforcement and audit trail",
+  "scripts": {
+    "build": "daml build",
+    "test": "daml test"
+  }
+}

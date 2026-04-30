@@ -1,0 +1,154 @@
+-- Instruction.daml
+-- Agent instruction template — represents a user intent submitted for execution
+
+module Instruction where
+
+-- | Amount type in micro-CC (same as TypeScript domain)
+type MicroCC = Decimal
+
+-- | Supported action types
+data ActionType
+  = FindYield
+  | ExecuteStrategy
+  | CheckBalance
+  | ViewOpportunities
+  | Unknown
+    deriving (Eq, Show)
+
+-- | Instruction status
+data InstructionStatus
+  = Pending
+  | Approved
+  | Rejected
+  | Executed
+  | Failed
+    deriving (Eq, Show)
+
+-- | Agent instruction — proposed by the agent, awaiting user approval
+template AgentInstruction
+  with
+    user : Party
+    agent : Party
+    instructionId : Text
+    action : ActionType
+    rawText : Text
+    amountMicroCC : MicroCC
+    provider : Optional Text
+    strategyId : Optional Text
+    slippageBps : Optional Int
+    simulationOnly : Bool
+    status : InstructionStatus
+    createdAt : Time
+    decisionAt : Optional Time
+    decisionBy : Optional Party
+  where
+    signatory user, agent
+
+    -- | User approves the instruction — creates an ExecutionApproval
+    choice ApproveInstruction : ContractId ExecutionApproval
+      with approver : Party; approvedAt : Time
+      controller user
+      do
+        create ExecutionApproval
+          with
+            user; agent; instructionId; action; rawText
+            amountMicroCC; provider; strategyId; slippageBps; simulationOnly
+            approvedAt; approver
+
+    -- | User rejects the instruction
+    choice RejectInstruction : ContractId ExecutionReceipt
+      with rejector : Party; rejectedAt : Time; reason : Text
+      controller user
+      do
+        create ExecutionReceipt
+          with
+            user; agent; instructionId; action; rawText
+            amountMicroCC; provider; strategyId; slippageBps; simulationOnly
+            status = Failed
+            outputMicroCC = 0.0
+            feesPaidMicroCC = 0.0
+            txHash = None
+            executedAt = rejectedAt
+            receiptReason = "Rejected: " <> reason
+
+    -- | Agent marks as executed (consuming choice after ExecutionApproval is exercised)
+    choice MarkExecuted : ContractId ExecutionReceipt
+      with
+        resultTxHash : Text
+        outputMicroCC : MicroCC
+        feesPaidMicroCC : MicroCC
+        executedAt : Time
+        resultStatus : InstructionStatus
+        receiptReason : Text
+      controller agent
+      do
+        create ExecutionReceipt
+          with
+            user; agent; instructionId; action; rawText
+            amountMicroCC; provider; strategyId; slippageBps; simulationOnly
+            status = resultStatus
+            outputMicroCC; feesPaidMicroCC
+            txHash = Some resultTxHash
+            executedAt; receiptReason
+
+-- | Execution approval — created when user approves an AgentInstruction
+template ExecutionApproval
+  with
+    user : Party
+    agent : Party
+    instructionId : Text
+    action : ActionType
+    rawText : Text
+    amountMicroCC : MicroCC
+    provider : Optional Text
+    strategyId : Optional Text
+    slippageBps : Optional Int
+    simulationOnly : Bool
+    approvedAt : Time
+    approver : Party
+  where
+    signatory user, agent
+    observer approver
+
+    -- | Agent exercises this to execute the approved instruction
+    choice ExerciseApproval : ContractId ExecutionReceipt
+      with
+        resultTxHash : Text
+        outputMicroCC : MicroCC
+        feesPaidMicroCC : MicroCC
+        executedAt : Time
+        resultStatus : InstructionStatus
+        receiptReason : Text
+      controller agent
+      do
+        create ExecutionReceipt
+          with
+            user; agent; instructionId; action; rawText
+            amountMicroCC; provider; strategyId; slippageBps; simulationOnly
+            status = resultStatus
+            outputMicroCC; feesPaidMicroCC
+            txHash = Some resultTxHash
+            executedAt; receiptReason
+
+-- | Execution receipt — immutable record of what happened
+template ExecutionReceipt
+  with
+    user : Party
+    agent : Party
+    instructionId : Text
+    action : ActionType
+    rawText : Text
+    amountMicroCC : MicroCC
+    provider : Optional Text
+    strategyId : Optional Text
+    slippageBps : Optional Int
+    simulationOnly : Bool
+    status : InstructionStatus
+    outputMicroCC : MicroCC
+    feesPaidMicroCC : MicroCC
+    txHash : Optional Text
+    executedAt : Time
+    receiptReason : Text
+  where
+    signatory user, agent
+    -- Receipts are immutable — no choices

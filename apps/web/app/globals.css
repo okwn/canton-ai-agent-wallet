@@ -1,0 +1,301 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ============================================
+   MARCUS — LOVABLE-INSPIRED DESIGN SYSTEM
+   Warm parchment: approachable, human, analog
+   ============================================ */
+
+/* ---- Lovable Design Tokens ---- */
+:root {
+  /* === Page & Surface === */
+  --color-cream: #f7f4ed;
+  --color-cream-surface: #f7f4ed;
+  --color-light: #fcfbf8;
+
+  /* === Foregrounds === */
+  --color-charcoal: #1c1c1c;
+  --color-charcoal-83: rgba(28, 28, 28, 0.83);
+  --color-charcoal-82: rgba(28, 28, 28, 0.82);
+  --color-charcoal-40: rgba(28, 28, 28, 0.4);
+  --color-charcoal-04: rgba(28, 28, 28, 0.04);
+  --color-charcoal-03: rgba(28, 28, 28, 0.03);
+  --color-muted-gray: #5f5f5d;
+
+  /* === Border & Divider === */
+  --color-light-cream: #eceae4;
+
+  /* === Interactive === */
+  --color-ring-blue: rgba(59, 130, 246, 0.5);
+  --color-focus-shadow: rgba(0, 0, 0, 0.1) 0px 4px 12px;
+
+  /* === Inset Shadow (signature) === */
+  --shadow-inset: rgba(255, 255, 255, 0.2) 0px 0.5px 0px 0px inset,
+    rgba(0, 0, 0, 0.2) 0px 0px 0px 0.5px inset,
+    rgba(0, 0, 0, 0.05) 0px 1px 2px 0px;
+
+  --shadow-inset-hover: rgba(255, 255, 255, 0.3) 0px 0.5px 0px 0px inset,
+    rgba(0, 0, 0, 0.25) 0px 0px 0px 0.5px inset,
+    rgba(0, 0, 0, 0.08) 0px 1px 2px 0px;
+
+  /* === Accent (warm green — used sparingly) === */
+  --color-accent: #4a7c39;
+  --color-accent-light: #5c943f;
+  --color-accent-muted: rgba(74, 124, 57, 0.12);
+  --color-accent-subtle: rgba(74, 124, 57, 0.06);
+
+  /* === Semantic === */
+  --color-success: #16a34a;
+  --color-success-bg: rgba(22, 163, 74, 0.1);
+  --color-warning: #d97706;
+  --color-warning-bg: rgba(217, 119, 6, 0.1);
+  --color-destructive: #dc2626;
+  --color-destructive-bg: rgba(220, 38, 38, 0.1);
+  --color-info: #2563eb;
+  --color-info-bg: rgba(37, 99, 235, 0.1);
+
+  /* === Border Radius === */
+  --radius-micro: 4px;
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  --radius-full: 9999px;
+
+  /* === Spacing === */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+  --space-16: 64px;
+  --space-20: 80px;
+  --space-24: 96px;
+}
+
+/* ---- Tailwind Color Mapping (Lovable Light) ---- */
+@layer base {
+  :root {
+    --background: var(--color-cream);
+    --foreground: var(--color-charcoal);
+
+    --card: var(--color-cream);
+    --card-foreground: var(--color-charcoal);
+
+    --primary: var(--color-charcoal);
+    --primary-foreground: var(--color-light);
+
+    --secondary: var(--color-cream);
+    --secondary-foreground: var(--color-charcoal);
+
+    --muted: var(--color-charcoal-04);
+    --muted-foreground: var(--color-muted-gray);
+
+    --accent: var(--color-cream);
+    --accent-foreground: var(--color-charcoal);
+
+    --destructive: var(--color-destructive);
+    --destructive-foreground: var(--color-light);
+
+    --border: var(--color-light-cream);
+    --input: var(--color-cream);
+    --ring: var(--color-ring-blue);
+
+    --radius: var(--radius-sm);
+  }
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background-color: var(--color-cream);
+  color: var(--color-charcoal);
+  font-family: ui-sans-serif, system-ui, -apple-system, sans-serif;
+  font-size: 16px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ---- Typography Scale ---- */
+.font-display-hero {
+  font-size: 3.75rem;
+  font-weight: 600;
+  line-height: 1.0;
+  letter-spacing: -1.5px;
+}
+
+.font-display-alt {
+  font-size: 3.75rem;
+  font-weight: 480;
+  line-height: 1.0;
+  letter-spacing: normal;
+}
+
+.font-section-heading {
+  font-size: 3rem;
+  font-weight: 600;
+  line-height: 1.0;
+  letter-spacing: -1.2px;
+}
+
+.font-subheading {
+  font-size: 2.25rem;
+  font-weight: 600;
+  line-height: 1.1;
+  letter-spacing: -0.9px;
+}
+
+.font-card-title {
+  font-size: 1.25rem;
+  font-weight: 400;
+  line-height: 1.25;
+  letter-spacing: normal;
+}
+
+.font-body-large {
+  font-size: 1.125rem;
+  font-weight: 400;
+  line-height: 1.38;
+  letter-spacing: normal;
+}
+
+.font-body {
+  font-size: 1rem;
+  font-weight: 400;
+  line-height: 1.5;
+  letter-spacing: normal;
+}
+
+.font-caption {
+  font-size: 0.875rem;
+  font-weight: 400;
+  line-height: 1.5;
+  letter-spacing: normal;
+}
+
+.font-label {
+  font-size: 0.875rem;
+  font-weight: 400;
+  line-height: 1.5;
+  letter-spacing: normal;
+}
+
+/* ---- Interactive States ---- */
+button:active,
+a:active {
+  opacity: 0.8;
+}
+
+button:focus-visible,
+a:focus-visible {
+  outline: none;
+  box-shadow: var(--color-focus-shadow);
+}
+
+/* ---- Form Elements ---- */
+input[type='text'],
+input[type='number'],
+input[type='email'],
+textarea {
+  background-color: var(--color-cream);
+  border: 1px solid var(--color-light-cream);
+  border-radius: var(--radius-sm);
+  padding: 8px 12px;
+  color: var(--color-charcoal);
+  font-size: 1rem;
+  line-height: 1.5;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+input[type='text']:focus,
+input[type='number']:focus,
+input[type='email']:focus,
+textarea:focus {
+  outline: none;
+  border-color: var(--color-charcoal-40);
+  box-shadow: 0 0 0 3px var(--color-ring-blue);
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: var(--color-muted-gray);
+}
+
+/* ---- Utility Classes ---- */
+.bg-cream { background-color: var(--color-cream); }
+.bg-cream-surface { background-color: var(--color-cream-surface); }
+.bg-light { background-color: var(--color-light); }
+
+.text-charcoal { color: var(--color-charcoal); }
+.text-charcoal-83 { color: var(--color-charcoal-83); }
+.text-charcoal-82 { color: var(--color-charcoal-82); }
+.text-muted-gray { color: var(--color-muted-gray); }
+
+.border-light-cream { border-color: var(--color-light-cream); }
+.border-charcoal-40 { border-color: var(--color-charcoal-40); }
+
+/* ---- Component Base Styles ---- */
+.card-surface {
+  background-color: var(--color-cream);
+  border: 1px solid var(--color-light-cream);
+  border-radius: var(--radius-lg);
+}
+
+.card-elevated {
+  background-color: var(--color-cream);
+  border: 1px solid var(--color-light-cream);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--color-focus-shadow);
+}
+
+/* ---- Animations ---- */
+@keyframes pulse-subtle {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+
+.animate-pulse-subtle {
+  animation: pulse-subtle 1.5s ease-in-out infinite;
+}
+
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.3s ease-out;
+}
+
+/* ---- Scrollbar Styling ---- */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-cream);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-light-cream);
+  border-radius: var(--radius-full);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-charcoal-40);
+}
+
+/* ---- Selection ---- */
+::selection {
+  background-color: var(--color-accent-muted);
+  color: var(--color-charcoal);
+}

@@ -1,0 +1,56 @@
+-- AuditLog.daml
+-- Daml template for append-only audit trail
+
+module AuditLog where
+
+-- | Represents an agent action with full provenance
+template AuditEntry
+  with
+    user : Party
+    agent : Party
+    actionType : Text
+    intentRaw : Text
+    intentAction : Text
+    intentAmount : Decimal
+    policyDecision : Text
+    policyReason : Text
+    executionResult : Text
+    isSimulated : Bool
+    timestamp : Time
+  where
+    signatory user, agent
+
+    -- Non-consuming choice to add a follow-up entry
+    choice AddRelatedEntry : ContractId AuditEntry
+      with
+        relatedAction : Text
+        relatedResult : Text
+      controller agent
+      do
+        create this with
+          actionType = relatedAction
+          intentRaw = this.intentRaw
+          intentAction = this.intentAction
+          intentAmount = this.intentAmount
+          policyDecision = this.policyDecision
+          policyReason = this.policyReason
+          executionResult = relatedResult
+          timestamp = timestamp
+
+-- | Audit log bundle — groups related entries
+template AuditLogBundle
+  with
+    user : Party
+    agent : Party
+    entries : [ContractId AuditEntry]
+    createdAt : Time
+  where
+    signatory user, agent
+
+    choice AddEntry : AuditLogBundle
+      with
+        newEntry : ContractId AuditEntry
+      controller agent
+      do
+        create this with
+          entries = newEntry :: entries
